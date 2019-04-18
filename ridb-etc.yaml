@@ -1,0 +1,102 @@
+---
+openapi: 3.0.0
+info:
+  title: RIDB API Additional Functions 0.1
+  description: >-
+    The Recreation Information Database (RIDB) provides data resources to citizens, offering a single point of access to information about recreational opportunities nationwide. The RIDB represents an authoritative source of information and services for millions of visitors to federal lands, historic sites, museums, and other attractions/resources. This initiative integrates multiple Federal channels and sources about recreation opportunities into a one-stop, searchable database of recreational areas nationwide.
+  version: 0.1.0
+servers:
+  - url: https://www.recreation.gov/api
+    description: Home recreation.gov API
+
+components:
+  schemas:
+    SearchAvailabilityOk:
+      type: object
+      required:
+      - payload
+      properties:
+        payload:
+          type: object
+          required:
+          - next_available_date
+          - permit_id
+          - date_availability
+          - quota_type_maps
+          properties:
+            permit_id:
+              type: integer
+            next_available_date:
+              type: string
+            date_availability:
+              type: object
+              additionalProperties:
+                $ref: '#/components/schemas/SearchEntry'
+            quota_type_maps:
+              type: object
+              properties:
+                ConstantQuotaUsageByStartDate:
+                  type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/SearchEntry'
+    SearchEntry:
+      type: object
+      required:
+      - total
+      - remaining
+      - show_walkup
+      properties:
+        total:
+          type: integer
+        remaining:
+          type: integer
+        show_walkup:
+          type: boolean
+paths:
+  /permits/{permitId}/divisions/{divisionId}/availability:
+    get:
+      summary: search for availability dates on a permit site
+      description: This endpoint reports open, bookable entry dates for permitted divisions.
+      operationId: permitDivisionSearchAvailability
+      parameters:
+      - name: permitId
+        in: path
+        description: 'id of the permit to search for (corresponds to facility)'
+        schema: {type: integer}
+        required: true
+        example: 249988
+      - name: divisionId
+        in: path
+        description: 'id of the division to search for (corresponds to permit entrance)'
+        schema: {type: integer}
+        required: true
+        example: 535
+      - name: start_date
+        in: query
+        description: 'return records not before this date (iso8601)'
+        schema:
+          type: string
+        example: "2019-02-25T08:00:00.000Z"
+      - name: end_date
+        in: query
+        description: 'return records not after this date (iso8601)'
+        schema:
+          type: string
+        example: "2019-02-25T08:00:00.000Z"
+      - name: commercial_acct
+        in: query
+        description: "is this request coming from a commercial account"
+        schema: {type: boolean}
+        example: false
+      - name: is_lottery
+        in: query
+        description: "not yet known"
+        schema: {type: boolean}
+        example: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchAvailabilityOk'
